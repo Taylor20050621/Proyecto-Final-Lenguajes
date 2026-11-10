@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,6 +70,19 @@ public class FileStorageService {
 
     public String getStoredFilename(String storedPath) {
         return resolveStoredPath(storedPath).getFileName().toString();
+    }
+
+    public String getDownloadFilename(String title, String storedPath) {
+        String extension = getExtension(getStoredFilename(storedPath));
+        String safeTitle = StringUtils.hasText(title)
+                ? title.trim().replaceAll("[^a-zA-Z0-9._-]", "_")
+                : "prototipo";
+        return safeTitle + extension;
+    }
+
+    public MediaType getMediaType(String storedPath) {
+        String filename = getStoredFilename(storedPath);
+        return MediaTypeFactory.getMediaType(filename).orElse(MediaType.APPLICATION_OCTET_STREAM);
     }
 
     private Path resolveStoredPath(String storedPath) {

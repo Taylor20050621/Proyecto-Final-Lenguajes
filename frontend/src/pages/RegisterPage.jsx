@@ -18,7 +18,7 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       await register(form.username, form.email, form.password, form.role)
-      navigate('/')
+      navigate('/catalog')
     } catch (requestError) {
       setError(requestError.message)
     } finally {

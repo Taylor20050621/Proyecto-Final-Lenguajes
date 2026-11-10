@@ -36,6 +36,9 @@ public class Game {
     @Column(length = 80)
     private String genre;
 
+    @Column(nullable = false, length = 20)
+    private String version = "1.0";
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Platform platform;
@@ -87,6 +90,14 @@ public class Game {
 
     public void setGenre(String genre) {
         this.genre = genre;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public Platform getPlatform() {

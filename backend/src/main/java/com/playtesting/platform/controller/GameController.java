@@ -7,7 +7,6 @@ import com.playtesting.platform.service.FileStorageService;
 import com.playtesting.platform.service.GameService;
 import jakarta.validation.Valid;
 import org.springframework.core.io.Resource;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,8 +43,19 @@ public class GameController {
     }
 
     @GetMapping
-    public java.util.List<GameResponseDto> findAll() {
-        return gameService.findAll();
+    public java.util.List<GameResponseDto> findAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String platform) {
+        return gameService.findAll(search, platform);
+    }
+
+    @PutMapping(value = "/{id}/update-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public GameResponseDto updateFile(
+            @PathVariable Long id,
+            @RequestParam String version,
+            @RequestPart("file") MultipartFile file,
+            Authentication authentication) {
+        return gameService.updateFile(id, version, file, authentication.getName());
     }
 
     @GetMapping("/{id}")
@@ -55,12 +67,13 @@ public class GameController {
     public ResponseEntity<Resource> download(@PathVariable Long id) {
         Game game = gameService.findEntityById(id);
         Resource resource = fileStorageService.loadAsResource(game.getFilePathOrUrl());
-        String filename = fileStorageService.getStoredFilename(game.getFilePathOrUrl());
+        String filename = fileStorageService.getDownloadFilename(
+                game.getTitle(), game.getFilePathOrUrl());
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentType(fileStorageService.getMediaType(game.getFilePathOrUrl()))
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment().filename(filename).build().toString())
+                        "attachment; filename=\"" + filename + "\"")
                 .body(resource);
     }
 }

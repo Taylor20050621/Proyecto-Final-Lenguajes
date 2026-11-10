@@ -8,6 +8,8 @@ import com.playtesting.platform.entity.User;
 import com.playtesting.platform.repository.GameRepository;
 import com.playtesting.platform.repository.UserRepository;
 import java.util.List;
+import java.util.Locale;
+import org.springframework.util.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,16 +45,31 @@ public class GameService {
         game.setTitle(request.title().trim());
         game.setDescription(request.description());
         game.setGenre(request.genre());
+        game.setVersion("1.0");
         game.setPlatform(request.platform());
         game.setFilePathOrUrl(fileStorageService.store(file));
         return toResponse(gameRepository.save(game));
     }
 
     @Transactional(readOnly = true)
-    public List<GameResponseDto> findAll() {
+    public List<GameResponseDto> findAll(String search, String platform) {
         return gameRepository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(game -> matchesSearch(game, search))
+                .filter(game -> matchesPlatform(game, platform))
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public GameResponseDto updateFile(Long id, String version, MultipartFile file, String username) {
+        Game game = findEntityById(id);
+        verifyOwnership(game, username);
+        if (!StringUtils.hasText(version) || version.trim().length() > 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Version is required and must have at most 20 characters");
+        }
+        game.setVersion(version.trim());
+        game.setFilePathOrUrl(fileStorageService.store(file));
+        return toResponse(gameRepository.save(game));
     }
 
     @Transactional(readOnly = true)
@@ -73,9 +90,32 @@ public class GameService {
                 game.getTitle(),
                 game.getDescription(),
                 game.getGenre(),
+                game.getVersion(),
                 game.getPlatform(),
                 game.getFilePathOrUrl(),
                 game.getCreator().getUsername(),
                 game.getCreatedAt());
+    }
+
+    private boolean matchesSearch(Game game, String search) {
+        if (!StringUtils.hasText(search)) {
+            return true;
+        }
+        String normalized = search.trim().toLowerCase(Locale.ROOT);
+        return (game.getTitle() != null && game.getTitle().toLowerCase(Locale.ROOT).contains(normalized))
+                || (game.getDescription() != null
+                        && game.getDescription().toLowerCase(Locale.ROOT).contains(normalized));
+    }
+
+    private boolean matchesPlatform(Game game, String platform) {
+        return !StringUtils.hasText(platform)
+                || game.getPlatform().name().equalsIgnoreCase(platform.trim());
+    }
+
+    private void verifyOwnership(Game game, String username) {
+        if (game.getCreator().getRole() != Role.CREATOR
+                || !game.getCreator().getUsername().equalsIgnoreCase(username)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the game creator can update this game");
+        }
     }
 }

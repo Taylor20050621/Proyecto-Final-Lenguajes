@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(form.identifier, form.password)
-      navigate('/')
+      navigate('/catalog')
     } catch (requestError) {
       setError(requestError.message)
     } finally {

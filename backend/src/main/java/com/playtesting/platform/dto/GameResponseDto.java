@@ -8,6 +8,7 @@ public record GameResponseDto(
         String title,
         String description,
         String genre,
+        String version,
         Platform platform,
         String filePathOrUrl,
         String creatorUsername,

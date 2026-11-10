@@ -1,5 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 const TOKEN_KEY = 'playtesting_jwt'
+const USER_KEY = 'playtesting_user'
 
 async function request(path, options) {
   const response = await fetch(`${API_URL}${path}`, {
@@ -22,7 +23,7 @@ export function login(identifier, password) {
     method: 'POST',
     body: JSON.stringify({ identifier, password }),
   }).then((data) => {
-    saveToken(data.jwtToken)
+    saveSession(data)
     return data
   })
 }
@@ -32,9 +33,17 @@ export function register(username, email, password, role) {
     method: 'POST',
     body: JSON.stringify({ username, email, password, role }),
   }).then((data) => {
-    saveToken(data.jwtToken)
+    saveSession(data)
     return data
   })
+}
+
+function saveSession(data) {
+  saveToken(data.jwtToken)
+  localStorage.setItem(USER_KEY, JSON.stringify({
+    username: data.username,
+    role: data.role,
+  }))
 }
 
 export function saveToken(token) {
@@ -49,7 +58,31 @@ export function isAuthenticated() {
   return Boolean(getToken())
 }
 
+export function getCurrentUser() {
+  const storedUser = localStorage.getItem(USER_KEY)
+  if (storedUser) {
+    try {
+      return JSON.parse(storedUser)
+    } catch {
+      localStorage.removeItem(USER_KEY)
+    }
+  }
+
+  const token = getToken()
+  if (!token) {
+    return null
+  }
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return { username: payload.sub, role: payload.role }
+  } catch {
+    return null
+  }
+}
+
 export function logout() {
   localStorage.removeItem(TOKEN_KEY)
-  window.location.assign('/')
+  localStorage.removeItem(USER_KEY)
+  window.location.assign('/login')
 }

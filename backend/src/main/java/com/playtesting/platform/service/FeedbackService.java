@@ -3,6 +3,8 @@ package com.playtesting.platform.service;
 import com.playtesting.platform.dto.AnswerRequestDto;
 import com.playtesting.platform.dto.FeedbackResponseDto;
 import com.playtesting.platform.dto.FeedbackResponseDto.SubmittedAnswerDto;
+import com.playtesting.platform.dto.FeedbackSummaryDto;
+import com.playtesting.platform.dto.FeedbackSummaryDto.QuestionSummaryDto;
 import com.playtesting.platform.dto.SubmitFeedbackRequestDto;
 import com.playtesting.platform.entity.Answer;
 import com.playtesting.platform.entity.Form;
@@ -18,6 +20,9 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,16 +85,90 @@ public class FeedbackService {
 
     @Transactional(readOnly = true)
     public List<FeedbackResponseDto> findByGameId(Long gameId, String username) {
-        var game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
-        if (!game.getCreator().getUsername().equalsIgnoreCase(username)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the game creator can view feedback");
-        }
+        verifyGameOwner(gameId, username);
         List<Response> responses = responseRepository.findAllByFormGameIdOrderBySubmittedAtDesc(gameId);
         if (responses.isEmpty()) {
             return List.of();
         }
         return responses.stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public FeedbackSummaryDto summarizeByGameId(Long gameId, String username) {
+        verifyGameOwner(gameId, username);
+        List<Response> responses = responseRepository.findAllByFormGameIdOrderBySubmittedAtDesc(gameId);
+        Map<Long, QuestionAccumulator> accumulators = new LinkedHashMap<>();
+        BigDecimal likertTotal = BigDecimal.ZERO;
+        long likertCount = 0;
+        BigDecimal numericTotal = BigDecimal.ZERO;
+        long numericCount = 0;
+
+        for (Response response : responses) {
+            for (Answer answer : response.getAnswers()) {
+                Question question = answer.getQuestion();
+                QuestionAccumulator accumulator = accumulators.computeIfAbsent(
+                        question.getId(), ignored -> new QuestionAccumulator(question));
+                if (question.getQuestionType() == QuestionType.TEXT) {
+                    if (answer.getAnswerText() != null && !answer.getAnswerText().isBlank()) {
+                        accumulator.comments.add(answer.getAnswerText());
+                    }
+                } else if (answer.getNumericValue() != null) {
+                    accumulator.total = accumulator.total.add(answer.getNumericValue());
+                    accumulator.count++;
+                    if (question.getQuestionType() == QuestionType.LIKERT_1_5) {
+                        likertTotal = likertTotal.add(answer.getNumericValue());
+                        likertCount++;
+                    } else if (question.getQuestionType() == QuestionType.NUMERIC) {
+                        numericTotal = numericTotal.add(answer.getNumericValue());
+                        numericCount++;
+                    }
+                }
+            }
+        }
+
+        List<QuestionSummaryDto> questionSummaries = accumulators.values().stream()
+                .map(QuestionAccumulator::toSummary)
+                .toList();
+        return new FeedbackSummaryDto(
+                responses.size(),
+                average(likertTotal, likertCount),
+                average(numericTotal, numericCount),
+                questionSummaries);
+    }
+
+    private void verifyGameOwner(Long gameId, String username) {
+        var game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+        if (!game.getCreator().getUsername().equalsIgnoreCase(username)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the game creator can view feedback");
+        }
+    }
+
+    private BigDecimal average(BigDecimal total, long count) {
+        return count == 0 ? null : total.divide(BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP);
+    }
+
+    private static final class QuestionAccumulator {
+        private final Question question;
+        private final List<String> comments = new ArrayList<>();
+        private BigDecimal total = BigDecimal.ZERO;
+        private long count;
+
+        private QuestionAccumulator(Question question) {
+            this.question = question;
+        }
+
+        private QuestionSummaryDto toSummary() {
+            BigDecimal average = count == 0
+                    ? null
+                    : total.divide(BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP);
+            return new QuestionSummaryDto(
+                    question.getId(),
+                    question.getQuestionText(),
+                    question.getQuestionType(),
+                    average,
+                    List.copyOf(comments));
+        }
     }
 
     private Question findQuestion(Form form, Long questionId) {

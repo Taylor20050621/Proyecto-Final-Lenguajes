@@ -1,6 +1,7 @@
 package com.playtesting.platform.controller;
 
 import com.playtesting.platform.dto.FeedbackResponseDto;
+import com.playtesting.platform.dto.FeedbackSummaryDto;
 import com.playtesting.platform.dto.SubmitFeedbackRequestDto;
 import com.playtesting.platform.service.FeedbackService;
 import jakarta.validation.Valid;
@@ -38,5 +39,12 @@ public class FeedbackController {
             @PathVariable Long gameId,
             Authentication authentication) {
         return feedbackService.findByGameId(gameId, authentication.getName());
+    }
+
+    @GetMapping("/game/{gameId}/summary")
+    public FeedbackSummaryDto summarizeByGame(
+            @PathVariable Long gameId,
+            Authentication authentication) {
+        return feedbackService.summarizeByGameId(gameId, authentication.getName());
     }
 }
