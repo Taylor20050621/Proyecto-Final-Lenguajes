@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface GameRepository extends JpaRepository<Game, Long> {
 
     List<Game> findAllByOrderByCreatedAtDesc();
+
+    List<Game> findAllByCreatorIdOrderByCreatedAtDesc(Long creatorId);
 }

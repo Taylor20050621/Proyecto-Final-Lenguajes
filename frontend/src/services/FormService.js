@@ -22,6 +22,10 @@ export function getActiveForm(gameId) {
   return request(`/api/forms/game/${gameId}`)
 }
 
+export function getFormByGameId(gameId) {
+  return getActiveForm(gameId)
+}
+
 export function createForm(gameId, form) {
   return request(`/api/forms?gameId=${gameId}`, {
     method: 'POST',

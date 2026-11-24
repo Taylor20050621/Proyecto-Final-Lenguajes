@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../services/AuthService'
 import { createForm } from '../services/FormService'
+import '../styles/Forms.css'
 import { getGames } from '../services/GameService'
 
 const questionTypes = [

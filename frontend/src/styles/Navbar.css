@@ -1,0 +1,20 @@
+.topbar { align-items: center; backdrop-filter: blur(12px); background: rgba(15, 23, 42, .72); border-bottom: 1px solid rgba(148, 163, 184, .14); display: flex; justify-content: space-between; max-width: 1180px; margin: auto; padding: 20px 32px; position: relative; z-index: 2; }
+.brand { font-size: 1.2rem; font-weight: 850; letter-spacing: -.04em; }
+.brand span { color: #a78bfa; }
+nav { align-items: center; display: flex; gap: 22px; color: #a7b3c8; font-size: .9rem; }
+nav a { transition: color .2s ease; }
+nav a:hover, .form-footer a { color: #c4b5fd; }
+.authenticated-nav { gap: 14px; }
+.user-badge { color: #e2e8f0; font-size: .8rem; }
+.user-badge strong { background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 20px; box-shadow: 0 2px 10px rgba(99, 102, 241, .4); color: #fff; font-size: .7rem; font-weight: bold; margin-left: 5px; padding: 4px 12px; }
+.user-badge strong:last-child { background: transparent; border: 1px solid #818cf8; box-shadow: none; color: #c4b5fd; padding: 3px 8px; }
+.nav-logout { background: transparent; border: 0; color: #a7b3c8; cursor: pointer; font: inherit; font-size: .9rem; padding: 0; transition: color .2s ease; }
+.nav-logout:hover { color: #fb7185; }
+.notification-badge { background: rgba(245, 158, 11, .16); border: 1px solid rgba(245, 158, 11, .45); border-radius: 999px; color: #fcd34d; font-size: .75rem; font-weight: 750; padding: 5px 9px; }
+
+@media (max-width: 600px) {
+  .topbar { padding: 18px 20px; }
+  nav { gap: 12px; }
+  .authenticated-nav { flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+  .user-badge { order: 3; text-align: right; width: 100%; }
+}

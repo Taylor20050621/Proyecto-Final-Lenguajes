@@ -6,5 +6,6 @@ public record AuthResponse(
         String jwtToken,
         String tokenType,
         String username,
-        Role role) {
+        Role role,
+        Integer points) {
 }

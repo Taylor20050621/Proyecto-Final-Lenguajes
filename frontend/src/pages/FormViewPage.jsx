@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getActiveForm, submitFeedback } from '../services/FormService'
+import { getFormByGameId, submitFeedback } from '../services/FormService'
+import '../styles/Forms.css'
 
 export default function FormViewPage() {
   const { gameId } = useParams()
@@ -9,12 +10,20 @@ export default function FormViewPage() {
   const [answers, setAnswers] = useState({})
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [formUnavailable, setFormUnavailable] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    getActiveForm(gameId)
+    setLoading(true)
+    setFormUnavailable(false)
+    setError('')
+    getFormByGameId(gameId)
       .then(setForm)
-      .catch((requestError) => setError(requestError.message))
+      .catch((requestError) => {
+        setForm(null)
+        setFormUnavailable(true)
+        setError(requestError.message)
+      })
       .finally(() => setLoading(false))
   }, [gameId])
 
@@ -36,6 +45,7 @@ export default function FormViewPage() {
         return { questionId: question.id, answerText: null, numericValue: value === '' || value === undefined ? null : Number(value) }
       })
       await submitFeedback(form.id, requestAnswers)
+      window.dispatchEvent(new Event('user-profile-updated'))
       navigate('/catalog')
     } catch (requestError) {
       setError(requestError.message)
@@ -45,7 +55,21 @@ export default function FormViewPage() {
   }
 
   if (loading) return <main className="content-shell"><p className="status-message">Cargando formulario...</p></main>
-  if (!form) return <main className="content-shell"><p className="error-message">{error || 'No hay un formulario activo para este juego.'}</p></main>
+  if (!form) {
+    return (
+      <main className="content-shell narrow-shell">
+        <section className="form-card form-empty-state">
+          <span className="eyebrow">FORMULARIO NO DISPONIBLE</span>
+          <h1>Este juego aún no cuenta con un formulario de evaluación publicado</h1>
+          <p>El creador todavía no ha publicado una encuesta para este prototipo. Puedes volver al catálogo y explorar otros juegos.</p>
+          {error && !formUnavailable && <p className="error-message">{error}</p>}
+          <button type="button" className="button secondary full-width" onClick={() => navigate('/catalog')}>
+            Volver al catálogo
+          </button>
+        </section>
+      </main>
+    )
+  }
 
   return (
     <main className="content-shell narrow-shell">

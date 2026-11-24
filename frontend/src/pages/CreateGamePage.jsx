@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createGame } from '../services/GameService'
+import '../styles/Forms.css'
 
 const genres = ['Acción', 'Aventura', 'Casual', 'Estrategia', 'Horror', 'Plataformas', 'RPG', 'Simulación']
 

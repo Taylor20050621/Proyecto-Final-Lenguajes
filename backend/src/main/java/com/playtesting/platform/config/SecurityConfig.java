@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/games/**").hasRole("CREATOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/games/**").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.GET, "/api/forms/game/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/forms/**").hasRole("CREATOR")
                         .requestMatchers(HttpMethod.POST, "/api/feedback").hasRole("TESTER")
@@ -50,7 +51,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -8,6 +8,7 @@ import com.playtesting.platform.dto.FeedbackSummaryDto.QuestionSummaryDto;
 import com.playtesting.platform.dto.SubmitFeedbackRequestDto;
 import com.playtesting.platform.entity.Answer;
 import com.playtesting.platform.entity.Form;
+import com.playtesting.platform.entity.GameStatus;
 import com.playtesting.platform.entity.Question;
 import com.playtesting.platform.entity.QuestionType;
 import com.playtesting.platform.entity.Response;
@@ -56,6 +57,10 @@ public class FeedbackService {
         }
 
         Form form = formService.findActiveEntity(request.formId());
+        if (form.getGame().getStatus() != GameStatus.EN_PLAYTESTING) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "This game is not currently accepting feedback");
+        }
         Set<Long> submittedQuestionIds = new HashSet<>();
         for (AnswerRequestDto answerRequest : request.answers()) {
             if (answerRequest.questionId() == null || !submittedQuestionIds.add(answerRequest.questionId())) {
@@ -80,7 +85,10 @@ public class FeedbackService {
             answer.setNumericValue(answerRequest.numericValue());
             response.addAnswer(answer);
         }
-        return toResponse(responseRepository.save(response));
+        FeedbackResponseDto feedback = toResponse(responseRepository.save(response));
+        tester.addPoints(50);
+        userRepository.save(tester);
+        return feedback;
     }
 
     @Transactional(readOnly = true)

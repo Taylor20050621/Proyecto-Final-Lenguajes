@@ -78,6 +78,7 @@ public class AuthService implements UserDetailsService {
     }
 
     private AuthResponse createResponse(User user) {
-        return new AuthResponse(jwtService.generateToken(user), "Bearer", user.getUsername(), user.getRole());
+        return new AuthResponse(
+                jwtService.generateToken(user), "Bearer", user.getUsername(), user.getRole(), user.getPoints());
     }
 }

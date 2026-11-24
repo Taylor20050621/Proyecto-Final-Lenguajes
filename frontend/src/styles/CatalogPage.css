@@ -1,0 +1,33 @@
+.game-grid { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.game-card { background: linear-gradient(145deg, rgba(30, 41, 59, .92), rgba(15, 23, 42, .82)); border: 1px solid rgba(148, 163, 184, .16); border-radius: 20px; box-shadow: 0 14px 40px rgba(2, 6, 23, .3); display: flex; flex-direction: column; padding: 24px; transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
+.game-card:hover { border-color: rgba(129, 140, 248, .55); box-shadow: 0 12px 24px -10px rgba(99, 102, 241, .5); transform: translateY(-4px); }
+.game-card-header { align-items: center; display: flex; justify-content: space-between; }
+.platform-tag, .game-genre { border-radius: 999px; font-size: .72rem; font-weight: 700; padding: 5px 9px; }
+.platform-tag { background: rgba(99, 102, 241, .16); color: #a5b4fc; }
+.game-genre { color: #a7b3c8; }
+.status-badge { align-self: flex-start; border-radius: 999px; font-size: .72rem; font-weight: 800; margin-top: 12px; padding: 5px 10px; }
+.status-en_playtesting { background: rgba(16, 185, 129, .16); border: 1px solid rgba(16, 185, 129, .5); color: #6ee7b7; }
+.status-pausado { background: rgba(245, 158, 11, .16); border: 1px solid rgba(245, 158, 11, .5); color: #fcd34d; }
+.status-finalizado { background: rgba(148, 163, 184, .14); border: 1px solid rgba(148, 163, 184, .3); color: #cbd5e1; }
+.status-control { display: grid; gap: 6px; margin-top: 12px; }
+.game-card h2 { color: #f8fafc; font-size: 1.35rem; margin: 20px 0 8px; }
+.game-card p { flex: 1; margin: 0 0 20px; }
+.game-card .button:disabled { line-height: 1.35; }
+.game-details { border-top: 1px solid rgba(148, 163, 184, .14); display: flex; gap: 24px; margin: 0 0 20px; padding-top: 15px; }
+.game-details div { min-width: 0; }
+.game-details dt { color: #71809a; font-size: .7rem; font-weight: 700; text-transform: uppercase; }
+.game-details dd { color: #dbeafe; font-size: .82rem; margin: 4px 0 0; overflow-wrap: anywhere; }
+.catalog-filters { background: rgba(30, 41, 59, .7); border: 1px solid rgba(148, 163, 184, .16); border-radius: 16px; display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 28px; padding: 18px; }
+.filter-group { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.filter-group label { color: #cbd5e1; margin-top: 0; }
+.filter-group input, .filter-group select { height: 42px; padding: 10px 13px; }
+.modal-backdrop { align-items: center; background: rgba(2, 6, 23, .7); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 10; }
+.modal-card { background: #17213a; border: 1px solid rgba(148, 163, 184, .18); border-radius: 18px; box-shadow: 0 25px 80px rgba(2, 6, 23, .6); max-width: 520px; padding: 30px; position: relative; width: 100%; }
+.modal-card h2 { color: #f8fafc; font-size: 1.6rem; margin: 14px 0 8px; }
+.modal-close { background: transparent; border: 0; color: #a7b3c8; cursor: pointer; font-size: 1.6rem; line-height: 1; position: absolute; right: 20px; top: 18px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+
+@media (max-width: 600px) {
+  .catalog-filters { grid-template-columns: 1fr; }
+  .modal-actions { flex-direction: column-reverse; }
+}

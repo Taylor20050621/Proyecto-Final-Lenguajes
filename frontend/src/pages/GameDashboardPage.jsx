@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getFeedbackSummary } from '../services/FormService'
+import '../styles/GameDashboard.css'
 
 const questionTypeLabels = {
   LIKERT_1_5: 'Calificación',
@@ -26,14 +27,14 @@ export default function GameDashboardPage() {
   }, [gameId])
 
   if (loading) {
-    return <main className="content-shell"><p className="status-message">Cargando métricas...</p></main>
+    return <main className="content-shell dashboard-container"><p className="status-message">Cargando métricas...</p></main>
   }
   if (error) {
-    return <main className="content-shell"><p className="error-message">{error}</p></main>
+    return <main className="content-shell dashboard-container"><p className="error-message">{error}</p></main>
   }
 
   return (
-    <main className="content-shell">
+    <main className="content-shell dashboard-container">
       <section className="page-heading">
         <span className="eyebrow">DASHBOARD DEL PROTOTIPO</span>
         <h1>Métricas y estadísticas</h1>

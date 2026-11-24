@@ -1,0 +1,55 @@
+:root {
+  --bg: #0f172a;
+  --surface: rgba(15, 23, 42, .78);
+  --surface-solid: #17213a;
+  --surface-soft: rgba(30, 41, 59, .72);
+  --border: rgba(148, 163, 184, .18);
+  --text: #f8fafc;
+  --muted: #a7b3c8;
+  --indigo: #6366f1;
+  --purple: #8b5cf6;
+  --emerald: #10b981;
+  --amber: #f59e0b;
+  --danger: #fb7185;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+body { background: radial-gradient(circle at 15% 0%, rgba(99, 102, 241, .16), transparent 34rem), var(--bg); margin: 0; min-width: 320px; }
+.app-main { background-color: #0f172a; color: #f8fafc; min-height: calc(100vh - 70px); padding: 2rem; }
+a { color: inherit; text-decoration: none; }
+.page-shell { align-items: center; display: flex; justify-content: center; min-height: calc(100vh - 89px); padding: 32px; }
+.hero-card, .auth-card { background: linear-gradient(145deg, rgba(30, 41, 59, .9), rgba(15, 23, 42, .82)); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 24px 80px rgba(2, 6, 23, .42); }
+.hero-card { max-width: 760px; padding: 72px; text-align: center; }
+.auth-card { max-width: 440px; padding: 44px; width: 100%; }
+.eyebrow { color: #a78bfa; font-size: .72rem; font-weight: 800; letter-spacing: .16em; }
+h1 { background: linear-gradient(90deg, #6366f1, #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: clamp(2.2rem, 5vw, 4rem); letter-spacing: -.06em; line-height: 1.05; margin: 18px 0; }
+.auth-card h1 { font-size: 2.5rem; }
+p { color: var(--muted); line-height: 1.6; }
+.muted { margin-bottom: 30px; }
+.hero-actions { display: flex; gap: 12px; justify-content: center; margin-top: 32px; }
+.button { border: 0; border-radius: 12px; cursor: pointer; display: inline-block; font: inherit; font-weight: 750; padding: 13px 22px; text-align: center; transition: box-shadow .2s ease, transform .2s ease, filter .2s ease; }
+.button:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-2px); }
+.button:disabled { cursor: not-allowed; opacity: .48; }
+.button[aria-disabled="true"] { cursor: not-allowed; opacity: .48; pointer-events: auto; }
+.primary { background: linear-gradient(135deg, var(--indigo), var(--purple)); box-shadow: 0 8px 24px rgba(99, 102, 241, .28); color: white; }
+.secondary { background: rgba(99, 102, 241, .14); border: 1px solid rgba(129, 140, 248, .35); color: #c4b5fd; }
+.full-width { margin-top: 10px; width: 100%; }
+.error-message { background: rgba(244, 63, 94, .13); border: 1px solid rgba(251, 113, 133, .25); border-radius: 10px; color: #fda4af; font-size: .84rem; margin: 8px 0; padding: 10px; }
+.content-shell { margin: 0 auto; max-width: 1120px; padding: 48px 32px 72px; }
+.narrow-shell { max-width: 680px; }
+.page-heading { margin-bottom: 32px; }
+.page-heading h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); margin-bottom: 12px; }
+.page-heading p { margin-top: 0; }
+.status-message { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); padding: 18px; }
+
+@media (max-width: 600px) {
+  .app-main { padding: 1.25rem; }
+  .page-shell { padding: 20px; }
+  .hero-card, .auth-card { padding: 32px 24px; }
+  .content-shell { padding: 32px 20px 56px; }
+}

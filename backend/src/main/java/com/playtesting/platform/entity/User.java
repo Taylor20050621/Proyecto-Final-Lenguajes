@@ -33,6 +33,9 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    @Column(nullable = false)
+    private Integer points = 0;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -77,6 +80,18 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points == null ? 0 : points;
+    }
+
+    public void addPoints(int points) {
+        this.points = (this.points == null ? 0 : this.points) + points;
     }
 
     public OffsetDateTime getCreatedAt() {

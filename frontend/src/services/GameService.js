@@ -7,10 +7,11 @@ async function parseError(response) {
   return payload?.message || payload?.error || 'No se pudo completar la solicitud.'
 }
 
-export async function getGames({ search = '', platform = '' } = {}) {
+export async function getGames({ search = '', platform = '', status = '' } = {}) {
   const query = new URLSearchParams()
   if (search.trim()) query.set('search', search.trim())
   if (platform) query.set('platform', platform)
+  if (status) query.set('status', status)
   const queryString = query.toString()
   const response = await fetch(`${API_URL}/api/games${queryString ? `?${queryString}` : ''}`)
   if (!response.ok) {
@@ -73,6 +74,21 @@ export async function createGame({ title, description, genre, platform, file }) 
     body: formData,
   })
 
+  if (!response.ok) {
+    throw new Error(await parseError(response))
+  }
+  return response.json()
+}
+
+export async function updateGameStatus(id, status) {
+  const response = await fetch(`${API_URL}/api/games/${id}/status`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status }),
+  })
   if (!response.ok) {
     throw new Error(await parseError(response))
   }

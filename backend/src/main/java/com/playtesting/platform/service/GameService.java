@@ -3,18 +3,22 @@ package com.playtesting.platform.service;
 import com.playtesting.platform.dto.GameRequestDto;
 import com.playtesting.platform.dto.GameResponseDto;
 import com.playtesting.platform.entity.Game;
+import com.playtesting.platform.entity.GameStatus;
 import com.playtesting.platform.entity.Role;
 import com.playtesting.platform.entity.User;
 import com.playtesting.platform.repository.GameRepository;
 import com.playtesting.platform.repository.UserRepository;
 import java.util.List;
 import java.util.Locale;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.springframework.util.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.Authentication;
 
 @Service
 public class GameService {
@@ -46,16 +50,18 @@ public class GameService {
         game.setDescription(request.description());
         game.setGenre(request.genre());
         game.setVersion("1.0");
+        game.setVersionUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
         game.setPlatform(request.platform());
         game.setFilePathOrUrl(fileStorageService.store(file));
         return toResponse(gameRepository.save(game));
     }
 
     @Transactional(readOnly = true)
-    public List<GameResponseDto> findAll(String search, String platform) {
+    public List<GameResponseDto> findAll(String search, String platform, String status) {
         return gameRepository.findAllByOrderByCreatedAtDesc().stream()
                 .filter(game -> matchesSearch(game, search))
                 .filter(game -> matchesPlatform(game, platform))
+                .filter(game -> matchesStatus(game, status))
                 .map(this::toResponse)
                 .toList();
     }
@@ -67,8 +73,18 @@ public class GameService {
         if (!StringUtils.hasText(version) || version.trim().length() > 20) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Version is required and must have at most 20 characters");
         }
+
         game.setVersion(version.trim());
+        game.setVersionUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
         game.setFilePathOrUrl(fileStorageService.store(file));
+        return toResponse(gameRepository.save(game));
+    }
+
+    @Transactional
+    public GameResponseDto updateStatus(Long id, GameStatus status, String username) {
+        Game game = findEntityById(id);
+        verifyOwnership(game, username);
+        game.setStatus(status);
         return toResponse(gameRepository.save(game));
     }
 
@@ -84,6 +100,20 @@ public class GameService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
     }
 
+    @Transactional(readOnly = true)
+    public Game findDownloadableEntity(Long id, Authentication authentication) {
+        Game game = findEntityById(id);
+        if (game.getStatus() == GameStatus.EN_PLAYTESTING) {
+            return game;
+        }
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Only the creator can download a paused or finalized game");
+        }
+        verifyOwnership(game, authentication.getName());
+        return game;
+    }
+
     private GameResponseDto toResponse(Game game) {
         return new GameResponseDto(
                 game.getId(),
@@ -92,6 +122,7 @@ public class GameService {
                 game.getGenre(),
                 game.getVersion(),
                 game.getPlatform(),
+                game.getStatus(),
                 game.getFilePathOrUrl(),
                 game.getCreator().getUsername(),
                 game.getCreatedAt());
@@ -110,6 +141,11 @@ public class GameService {
     private boolean matchesPlatform(Game game, String platform) {
         return !StringUtils.hasText(platform)
                 || game.getPlatform().name().equalsIgnoreCase(platform.trim());
+    }
+
+    private boolean matchesStatus(Game game, String status) {
+        return !StringUtils.hasText(status)
+                || game.getStatus().name().equalsIgnoreCase(status.trim());
     }
 
     private void verifyOwnership(Game game, String username) {

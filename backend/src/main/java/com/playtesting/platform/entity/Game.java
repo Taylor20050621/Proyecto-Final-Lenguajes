@@ -39,6 +39,13 @@ public class Game {
     @Column(nullable = false, length = 20)
     private String version = "1.0";
 
+    @Column(name = "version_updated_at", nullable = false)
+    private OffsetDateTime versionUpdatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private GameStatus status = GameStatus.EN_PLAYTESTING;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Platform platform;
@@ -53,6 +60,9 @@ public class Game {
     void setCreatedAt() {
         if (createdAt == null) {
             createdAt = OffsetDateTime.now(ZoneOffset.UTC);
+        }
+        if (versionUpdatedAt == null) {
+            versionUpdatedAt = createdAt;
         }
     }
 
@@ -98,6 +108,22 @@ public class Game {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public OffsetDateTime getVersionUpdatedAt() {
+        return versionUpdatedAt;
+    }
+
+    public void setVersionUpdatedAt(OffsetDateTime versionUpdatedAt) {
+        this.versionUpdatedAt = versionUpdatedAt;
+    }
+
+    public GameStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(GameStatus status) {
+        this.status = status;
     }
 
     public Platform getPlatform() {

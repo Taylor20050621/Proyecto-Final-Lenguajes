@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getFeedback } from '../services/FormService'
+import '../styles/Forms.css'
 
 export default function FeedbackResultsPage() {
   const { gameId } = useParams()

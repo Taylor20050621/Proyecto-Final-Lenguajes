@@ -1,0 +1,12 @@
+.profile-summary { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); margin-bottom: 42px; }
+.profile-summary .kpi-card { background: linear-gradient(145deg, rgba(99, 102, 241, .25), rgba(139, 92, 246, .12)); border: 1px solid rgba(129, 140, 248, .35); border-radius: 18px; box-shadow: 0 14px 40px rgba(2, 6, 23, .28); padding: 24px; }
+.profile-summary .kpi-card span { color: #c4b5fd; display: block; font-size: .82rem; }
+.profile-summary .kpi-card strong { color: #fff; display: block; font-size: 1.8rem; margin-top: 12px; }
+.activity-list, .notification-list { background: rgba(30, 41, 59, .7); border: 1px solid rgba(148, 163, 184, .16); border-radius: 16px; display: grid; gap: 10px; list-style: none; margin: 0; padding: 20px; }
+.activity-list li { background: rgba(15, 23, 42, .6); border-radius: 8px; color: #dbeafe; padding: 12px; }
+.notification-list { margin-bottom: 32px; }
+.notification-list li { background: rgba(245, 158, 11, .12); border: 1px solid rgba(245, 158, 11, .3); border-radius: 8px; color: #fcd34d; padding: 12px; }
+
+@media (max-width: 600px) {
+  .profile-summary { grid-template-columns: 1fr; }
+}
