@@ -17,9 +17,31 @@ export default function RegisterPage() {
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
+    const username = form.username.trim()
+    const email = form.email.trim()
+    if (!username || !email || !form.password.trim()) {
+      setError('Completa todos los campos obligatorios.')
+      return
+    }
+    if (username.length < 3 || username.length > 50) {
+      setError('El nombre de usuario debe tener entre 3 y 50 caracteres.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Ingresa un correo electrónico válido.')
+      return
+    }
+    if (form.password.length < 8 || form.password.length > 72) {
+      setError('La contraseña debe tener entre 8 y 72 caracteres.')
+      return
+    }
+    if (!['TESTER', 'CREATOR'].includes(form.role)) {
+      setError('Selecciona un tipo de cuenta válido.')
+      return
+    }
     setLoading(true)
     try {
-      await register(form.username, form.email, form.password, form.role)
+      await register(username, email, form.password, form.role)
       navigate('/catalog')
     } catch (requestError) {
       setError(requestError.message)
@@ -34,14 +56,14 @@ export default function RegisterPage() {
         <span className="eyebrow">ÚNETE A LA COMUNIDAD</span>
         <h1>Crear cuenta</h1>
         <p className="muted">Elige cómo quieres participar en el playtesting.</p>
-        <form onSubmit={handleSubmit}>
+        <form noValidate onSubmit={handleSubmit}>
           <label htmlFor="username">Nombre de usuario</label>
-          <input id="username" name="username" value={form.username} onChange={updateField} minLength="3" maxLength="50" required />
+          <input id="username" name="username" value={form.username} onChange={updateField} minLength="3" maxLength="50" autoComplete="username" required />
           <label htmlFor="email">Email</label>
-          <input id="email" name="email" type="email" value={form.email} onChange={updateField} required />
+          <input id="email" name="email" type="email" value={form.email} onChange={updateField} maxLength="255" autoComplete="email" required />
           <label htmlFor="password">Contraseña</label>
           <div className="password-field">
-            <input id="password" name="password" type={showPassword ? 'text' : 'password'} value={form.password} minLength="8" maxLength="72" onChange={updateField} required />
+            <input id="password" name="password" type={showPassword ? 'text' : 'password'} value={form.password} minLength="8" maxLength="72" onChange={updateField} autoComplete="new-password" required />
             <button type="button" className="password-toggle" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
               {showPassword ? (
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

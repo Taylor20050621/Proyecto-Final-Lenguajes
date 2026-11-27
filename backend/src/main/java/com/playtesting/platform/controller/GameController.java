@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
 @RestController
 @RequestMapping("/api/games")
@@ -40,26 +41,34 @@ public class GameController {
     public ResponseEntity<GameResponseDto> create(
             @Valid @RequestPart("game") GameRequestDto request,
             @RequestPart("file") MultipartFile file,
+            @RequestPart(value = "coverImage", required = false) MultipartFile coverImage,
             Authentication authentication) {
         return ResponseEntity.status(201)
-                .body(gameService.create(request, file, authentication.getName()));
+                .body(gameService.create(request, file, coverImage, authentication.getName()));
     }
 
     @GetMapping
     public java.util.List<GameResponseDto> findAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String platform,
-            @RequestParam(required = false) String status) {
-        return gameService.findAll(search, platform, status);
+            @RequestParam(required = false) String status,
+            Authentication authentication) {
+        String username = authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getName())
+                        ? authentication.getName()
+                        : null;
+        return gameService.findAll(search, platform, status, username);
     }
 
-    @PutMapping(value = "/{id}/update-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = {"/{id}/update-file", "/{id}/version"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public GameResponseDto updateFile(
             @PathVariable Long id,
             @RequestParam String version,
+            @RequestParam(value = "releaseNotes", required = false) String releaseNotes,
             @RequestPart("file") MultipartFile file,
+            @RequestPart(value = "coverImage", required = false) MultipartFile coverImage,
             Authentication authentication) {
-        return gameService.updateFile(id, version, file, authentication.getName());
+        return gameService.updateFile(id, version, releaseNotes, file, coverImage, authentication.getName());
     }
 
     @PatchMapping("/{id}/status")
@@ -67,7 +76,7 @@ public class GameController {
             @PathVariable Long id,
             @Valid @RequestBody GameStatusRequestDto request,
             Authentication authentication) {
-        return gameService.updateStatus(id, request.status(), authentication.getName());
+        return gameService.updateStatus(id, request.status(), request.officialUrl(), authentication.getName());
     }
 
     @GetMapping("/{id}")
@@ -88,6 +97,18 @@ public class GameController {
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + filename + "\"")
+                .body(resource);
+    }
+
+    @GetMapping("/{id}/cover")
+    public ResponseEntity<Resource> cover(@PathVariable Long id) {
+        Game game = gameService.findEntityById(id);
+        if (!StringUtils.hasText(game.getCoverImagePath())) {
+            return ResponseEntity.notFound().build();
+        }
+        Resource resource = fileStorageService.loadAsResource(game.getCoverImagePath());
+        return ResponseEntity.ok()
+                .contentType(fileStorageService.getCoverImageMediaType(game.getCoverImagePath()))
                 .body(resource);
     }
 }

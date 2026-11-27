@@ -7,8 +7,17 @@ import java.util.List;
 public record FeedbackSummaryDto(
         long totalResponses,
         BigDecimal averageLikertScore,
+        long likertAnswerCount,
         BigDecimal averagePlayTime,
         List<QuestionSummaryDto> questionSummaries) {
+
+    public FeedbackSummaryDto(
+            long totalResponses,
+            BigDecimal averageLikertScore,
+            BigDecimal averagePlayTime,
+            List<QuestionSummaryDto> questionSummaries) {
+        this(totalResponses, averageLikertScore, 0, averagePlayTime, questionSummaries);
+    }
 
     public record QuestionSummaryDto(
             Long questionId,

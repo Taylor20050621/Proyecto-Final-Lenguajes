@@ -11,9 +11,13 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ProfilePage from './pages/ProfilePage'
 import LandingPage from './pages/LandingPage'
+import { ToastProvider } from './contexts/ToastContext'
+import CreatorMetricsPage from './pages/CreatorMetricsPage'
+import LeaderboardPage from './pages/LeaderboardPage'
+import TesterHistoryPage from './pages/TesterHistoryPage'
 
 function RequireAuth({ children }) {
-  return isAuthenticated() ? children : <Navigate to="/login" replace />
+  return isAuthenticated() ? children : <Navigate to="/" replace />
 }
 
 function RequireRole({ role, children }) {
@@ -23,7 +27,7 @@ function RequireRole({ role, children }) {
 
 export default function App() {
   return (
-    <>
+    <ToastProvider>
       <Navbar />
       <div className="app-main">
         <Routes>
@@ -32,6 +36,9 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/catalog" element={<RequireAuth><CatalogPage /></RequireAuth>} />
           <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+          <Route path="/tester/history" element={<RequireAuth><RequireRole role="TESTER"><TesterHistoryPage /></RequireRole></RequireAuth>} />
+          <Route path="/leaderboard" element={<RequireAuth><LeaderboardPage /></RequireAuth>} />
+          <Route path="/creator/metrics" element={<RequireAuth><RequireRole role="CREATOR"><CreatorMetricsPage /></RequireRole></RequireAuth>} />
           <Route path="/create-game" element={<RequireAuth><RequireRole role="CREATOR"><CreateGamePage /></RequireRole></RequireAuth>} />
           <Route path="/create-form" element={<RequireAuth><RequireRole role="CREATOR"><CreateFormPage /></RequireRole></RequireAuth>} />
           <Route path="/games/:gameId/form" element={<RequireAuth><RequireRole role="TESTER"><FormViewPage /></RequireRole></RequireAuth>} />
@@ -40,6 +47,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-    </>
+    </ToastProvider>
   )
 }

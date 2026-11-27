@@ -1,28 +1,17 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+import { API_URL, requestJson } from './apiClient'
+
 const TOKEN_KEY = 'playtesting_jwt'
 const USER_KEY = 'playtesting_user'
 const READ_NOTIFICATIONS_PREFIX = 'playtesting_read_notifications:'
 
-async function request(path, options) {
-  const response = await fetch(`${API_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options?.headers || {}),
-    },
-    ...options,
-  })
-
-  const payload = await response.json().catch(() => null)
-  if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || 'No se pudo completar la solicitud.')
-  }
-  return payload
-}
-
 export function login(identifier, password) {
-  return request('/api/auth/login', {
+  return requestJson(`${API_URL}/api/auth/login`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ identifier, password }),
+  }, 'No se pudo iniciar sesión. Inténtalo nuevamente.', {
+    network: 'No se pudo conectar con el servidor. Verifica que el backend esté activo e inténtalo de nuevo.',
+    statusMessages: { 401: 'Usuario, correo o contraseña incorrectos.' },
   }).then((data) => {
     saveSession(data)
     return data
@@ -30,10 +19,11 @@ export function login(identifier, password) {
 }
 
 export function register(username, email, password, role) {
-  return request('/api/auth/register', {
+  return requestJson(`${API_URL}/api/auth/register`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, email, password, role }),
-  }).then((data) => {
+  }, 'No se pudo crear la cuenta. Inténtalo nuevamente.').then((data) => {
     saveSession(data)
     return data
   })
@@ -121,19 +111,13 @@ export function markNotificationsAsRead(notifications) {
 export function logout() {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
-  window.location.assign('/login')
+  window.location.replace('/')
 }
 
 export async function getMyProfile() {
-  const response = await fetch(`${API_URL}/api/users/me`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-  })
-  const payload = await response.json().catch(() => null)
-  if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || 'No se pudo cargar el perfil.')
-  }
+  const payload = await requestJson(`${API_URL}/api/users/me`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  }, 'No se pudo cargar el perfil.')
   localStorage.setItem(USER_KEY, JSON.stringify({
     username: payload.username,
     role: payload.role,
@@ -142,15 +126,8 @@ export async function getMyProfile() {
   return payload
 }
 
-export async function getMyNotifications() {
-  const response = await fetch(`${API_URL}/api/users/me/notifications`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-  })
-  const payload = await response.json().catch(() => null)
-  if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || 'No se pudieron cargar las notificaciones.')
-  }
-  return payload
+export function getMyNotifications() {
+  return requestJson(`${API_URL}/api/users/me/notifications`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  }, 'No se pudieron cargar las notificaciones.')
 }

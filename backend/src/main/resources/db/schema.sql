@@ -18,20 +18,30 @@ CREATE TABLE IF NOT EXISTS games (
     genre VARCHAR(80),
     platform VARCHAR(20) NOT NULL,
     file_path_or_url VARCHAR(1000),
+    cover_image_path VARCHAR(1000),
+    release_notes TEXT,
+    official_url VARCHAR(500),
     status VARCHAR(20) NOT NULL DEFAULT 'EN_PLAYTESTING',
     version_updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT games_creator_fk
         FOREIGN KEY (creator_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT games_platform_chk
-        CHECK (platform IN ('PC', 'WEBGL', 'PRINT_AND_PLAY')),
+        CHECK (platform IN ('PC', 'ANDROID', 'IOS', 'PLAYSTATION', 'XBOX', 'NINTENDO_SWITCH', 'WEB', 'WEBGL', 'PRINT_AND_PLAY')),
     CONSTRAINT games_title_chk CHECK (LENGTH(TRIM(title)) > 0)
 );
 
 ALTER TABLE games ADD COLUMN IF NOT EXISTS version VARCHAR(20) NOT NULL DEFAULT '1.0';
+ALTER TABLE games ADD COLUMN IF NOT EXISTS cover_image_path VARCHAR(1000);
+ALTER TABLE games ADD COLUMN IF NOT EXISTS release_notes TEXT;
+ALTER TABLE games ADD COLUMN IF NOT EXISTS official_url VARCHAR(500);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE games ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'EN_PLAYTESTING';
 ALTER TABLE games ADD COLUMN IF NOT EXISTS version_updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE responses ADD COLUMN IF NOT EXISTS evaluated_version VARCHAR(20);
+ALTER TABLE games DROP CONSTRAINT IF EXISTS games_platform_chk;
+ALTER TABLE games ADD CONSTRAINT games_platform_chk
+    CHECK (platform IN ('PC', 'ANDROID', 'IOS', 'PLAYSTATION', 'XBOX', 'NINTENDO_SWITCH', 'WEB', 'WEBGL', 'PRINT_AND_PLAY'));
 ALTER TABLE games DROP CONSTRAINT IF EXISTS games_status_chk;
 ALTER TABLE games ADD CONSTRAINT games_status_chk
     CHECK (status IN ('EN_PLAYTESTING', 'PAUSADO', 'FINALIZADO'));
@@ -67,6 +77,7 @@ CREATE TABLE IF NOT EXISTS responses (
     form_id BIGINT NOT NULL,
     tester_id BIGINT NOT NULL,
     submitted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    evaluated_version VARCHAR(20),
     CONSTRAINT responses_form_fk
         FOREIGN KEY (form_id) REFERENCES forms (id) ON DELETE CASCADE,
     CONSTRAINT responses_tester_fk
@@ -93,4 +104,5 @@ CREATE INDEX IF NOT EXISTS idx_forms_game_id ON forms (game_id);
 CREATE INDEX IF NOT EXISTS idx_questions_form_id ON questions (form_id);
 CREATE INDEX IF NOT EXISTS idx_responses_form_id ON responses (form_id);
 CREATE INDEX IF NOT EXISTS idx_responses_tester_id ON responses (tester_id);
+CREATE INDEX IF NOT EXISTS idx_responses_tester_game_version ON responses (tester_id, evaluated_version);
 CREATE INDEX IF NOT EXISTS idx_answers_response_id ON answers (response_id);

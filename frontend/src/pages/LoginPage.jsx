@@ -17,9 +17,18 @@ export default function LoginPage() {
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
+    const identifier = form.identifier.trim()
+    if (!identifier || !form.password.trim()) {
+      setError('Ingresa tu usuario o correo electrónico y tu contraseña.')
+      return
+    }
+    if (identifier.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+      setError('Ingresa un correo electrónico válido.')
+      return
+    }
     setLoading(true)
     try {
-      await login(form.identifier, form.password)
+      await login(identifier, form.password)
       navigate('/catalog')
     } catch (requestError) {
       setError(requestError.message)
@@ -34,12 +43,12 @@ export default function LoginPage() {
         <span className="eyebrow">BIENVENIDO DE VUELTA</span>
         <h1>Iniciar sesión</h1>
         <p className="muted">Ingresa para continuar con tus playtests.</p>
-        <form onSubmit={handleSubmit}>
+        <form noValidate onSubmit={handleSubmit}>
           <label htmlFor="identifier">Usuario o email</label>
-          <input id="identifier" name="identifier" value={form.identifier} onChange={updateField} required />
+          <input id="identifier" name="identifier" value={form.identifier} onChange={updateField} autoComplete="username" required />
           <label htmlFor="password">Contraseña</label>
           <div className="password-field">
-            <input id="password" name="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={updateField} required />
+            <input id="password" name="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={updateField} autoComplete="current-password" required />
             <button type="button" className="password-toggle" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
               {showPassword ? (
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

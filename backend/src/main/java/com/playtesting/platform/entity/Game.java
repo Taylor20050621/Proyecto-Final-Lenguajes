@@ -53,6 +53,15 @@ public class Game {
     @Column(name = "file_path_or_url", length = 1000)
     private String filePathOrUrl;
 
+    @Column(name = "cover_image_path", length = 1000)
+    private String coverImagePath;
+
+    @Column(name = "release_notes", columnDefinition = "TEXT")
+    private String releaseNotes;
+
+    @Column(name = "official_url", length = 500)
+    private String officialUrl;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -140,6 +149,30 @@ public class Game {
 
     public void setFilePathOrUrl(String filePathOrUrl) {
         this.filePathOrUrl = filePathOrUrl;
+    }
+
+    public String getCoverImagePath() {
+        return coverImagePath;
+    }
+
+    public void setCoverImagePath(String coverImagePath) {
+        this.coverImagePath = coverImagePath;
+    }
+
+    public String getReleaseNotes() {
+        return releaseNotes;
+    }
+
+    public void setReleaseNotes(String releaseNotes) {
+        this.releaseNotes = releaseNotes;
+    }
+
+    public String getOfficialUrl() {
+        return officialUrl;
+    }
+
+    public void setOfficialUrl(String officialUrl) {
+        this.officialUrl = officialUrl;
     }
 
     public OffsetDateTime getCreatedAt() {

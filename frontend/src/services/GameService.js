@@ -1,10 +1,13 @@
 import { getToken } from './AuthService'
+import { API_URL, fetchApi, NETWORK_ERROR_MESSAGE, requestJson } from './apiClient'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+export function getGameCoverUrl(gameId) {
+  return `${API_URL}/api/games/${gameId}/cover`
+}
 
-async function parseError(response) {
-  const payload = await response.json().catch(() => null)
-  return payload?.message || payload?.error || 'No se pudo completar la solicitud.'
+function authHeaders() {
+  const token = getToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 export async function getGames({ search = '', platform = '', status = '' } = {}) {
@@ -13,41 +16,43 @@ export async function getGames({ search = '', platform = '', status = '' } = {})
   if (platform) query.set('platform', platform)
   if (status) query.set('status', status)
   const queryString = query.toString()
-  const response = await fetch(`${API_URL}/api/games${queryString ? `?${queryString}` : ''}`)
-  if (!response.ok) {
-    throw new Error(await parseError(response))
-  }
-  return response.json()
+  return requestJson(`${API_URL}/api/games${queryString ? `?${queryString}` : ''}`, {
+    headers: authHeaders(),
+  }, 'No se pudo cargar el catálogo.')
 }
 
-export async function updateGameFile(id, version, file) {
+export function getGameById(id) {
+  return requestJson(`${API_URL}/api/games/${id}`, {}, 'No se pudo cargar el juego.')
+}
+
+export function updateGameFile(id, version, file, releaseNotes = null, coverImage = null) {
   const formData = new FormData()
   formData.append('version', version)
   formData.append('file', file)
-  const response = await fetch(`${API_URL}/api/games/${id}/update-file`, {
+  if (releaseNotes !== null) formData.append('releaseNotes', releaseNotes)
+  if (coverImage) formData.append('coverImage', coverImage)
+  return requestJson(`${API_URL}/api/games/${id}/update-file`, {
     method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: authHeaders(),
     body: formData,
-  })
-  if (!response.ok) {
-    throw new Error(await parseError(response))
-  }
-  return response.json()
+    isMultipart: true,
+  }, 'No se pudo actualizar la versión.')
 }
 
 export async function downloadGame(id) {
-  const response = await fetch(`${API_URL}/api/games/${id}/download`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+  const response = await fetchApi(`${API_URL}/api/games/${id}/download`, {
+    headers: authHeaders(),
   })
-  if (!response.ok) {
-    throw new Error(await parseError(response))
-  }
 
-  const blob = await response.blob()
+  let blob
+  try {
+    blob = await response.blob()
+  } catch (error) {
+    if (error instanceof TypeError || /network|fetch/i.test(error?.message || '')) {
+      throw new Error(NETWORK_ERROR_MESSAGE)
+    }
+    throw error
+  }
   const disposition = response.headers.get('Content-Disposition') || ''
   const filenameMatch = disposition.match(/filename="?([^"]+)"?/i)
   return {
@@ -56,41 +61,32 @@ export async function downloadGame(id) {
   }
 }
 
-export async function createGame({ title, description, genre, platform, file }) {
+export function createGame({ title, description, genre, platform, file, coverImage, releaseNotes }) {
   const formData = new FormData()
   formData.append(
     'game',
-    new Blob([JSON.stringify({ title, description, genre, platform })], {
+    new Blob([JSON.stringify({ title, description, genre, platform, releaseNotes })], {
       type: 'application/json',
     }),
   )
   formData.append('file', file)
+  if (coverImage) formData.append('coverImage', coverImage)
 
-  const response = await fetch(`${API_URL}/api/games`, {
+  return requestJson(`${API_URL}/api/games`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: authHeaders(),
     body: formData,
-  })
-
-  if (!response.ok) {
-    throw new Error(await parseError(response))
-  }
-  return response.json()
+    isMultipart: true,
+  }, 'No se pudo publicar el juego.')
 }
 
-export async function updateGameStatus(id, status) {
-  const response = await fetch(`${API_URL}/api/games/${id}/status`, {
+export function updateGameStatus(id, status, officialUrl) {
+  return requestJson(`${API_URL}/api/games/${id}/status`, {
     method: 'PATCH',
     headers: {
-      Authorization: `Bearer ${getToken()}`,
+      ...authHeaders(),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ status }),
-  })
-  if (!response.ok) {
-    throw new Error(await parseError(response))
-  }
-  return response.json()
+    body: JSON.stringify({ status, officialUrl }),
+  }, 'No se pudo actualizar el estado del juego.')
 }

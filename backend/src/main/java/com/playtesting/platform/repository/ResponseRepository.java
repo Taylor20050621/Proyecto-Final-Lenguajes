@@ -10,6 +10,9 @@ public interface ResponseRepository extends JpaRepository<Response, Long> {
 
     long countByTesterId(Long testerId);
 
+    boolean existsByTesterIdAndFormGameIdAndEvaluatedVersion(
+            Long testerId, Long gameId, String evaluatedVersion);
+
     List<Response> findAllByTesterIdOrderBySubmittedAtDesc(Long testerId);
 
     List<Response> findAllByFormGameCreatorId(Long creatorId);

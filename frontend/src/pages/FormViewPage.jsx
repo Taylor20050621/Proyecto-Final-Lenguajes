@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getFormByGameId, submitFeedback } from '../services/FormService'
+import { useToast } from '../contexts/ToastContext'
 import '../styles/Forms.css'
+
+const ratingLabels = {
+  1: 'Muy bajo',
+  2: 'Bajo',
+  3: 'Regular',
+  4: 'Bueno',
+  5: 'Excelente',
+}
 
 export default function FormViewPage() {
   const { gameId } = useParams()
@@ -12,6 +21,8 @@ export default function FormViewPage() {
   const [loading, setLoading] = useState(true)
   const [formUnavailable, setFormUnavailable] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [hoveredRatings, setHoveredRatings] = useState({})
+  const notify = useToast()
 
   useEffect(() => {
     setLoading(true)
@@ -34,6 +45,43 @@ export default function FormViewPage() {
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
+    const unanswered = form.questions.filter((question) => {
+      const value = answers[question.id]
+      if (!question.required) return false
+      if (question.questionType === 'TEXT') return typeof value !== 'string' || !value.trim()
+      if (question.questionType === 'LIKERT_1_5') {
+        const rating = Number(value)
+        return !Number.isInteger(rating) || rating < 1 || rating > 5
+      }
+      if (question.questionType === 'NUMERIC') {
+        return value === undefined
+          || value === ''
+          || !Number.isFinite(Number(value))
+          || !/^-?\d{1,8}(?:\.\d{1,2})?$/.test(String(value))
+      }
+      return true
+    })
+    const invalidAnswers = form.questions.filter((question) => {
+      const value = answers[question.id]
+      if (value === undefined || value === '') return false
+      if (question.questionType === 'LIKERT_1_5') {
+        const rating = Number(value)
+        return !Number.isInteger(rating) || rating < 1 || rating > 5
+      }
+      if (question.questionType === 'NUMERIC') {
+        return !Number.isFinite(Number(value)) || !/^-?\d{1,8}(?:\.\d{1,2})?$/.test(String(value))
+      }
+      return false
+    })
+    if (unanswered.length || invalidAnswers.length) {
+      const missingNames = unanswered.map((question) => question.questionText)
+      const invalidNames = invalidAnswers.map((question) => question.questionText)
+      const parts = []
+      if (missingNames.length) parts.push(`Responde las preguntas obligatorias: ${missingNames.join('; ')}.`)
+      if (invalidNames.length) parts.push(`Revisa las respuestas numéricas de: ${invalidNames.join('; ')}.`)
+      setError(parts.join(' '))
+      return
+    }
     setSaving(true)
     try {
       const requestAnswers = form.questions.filter((question) => {
@@ -46,6 +94,7 @@ export default function FormViewPage() {
       })
       await submitFeedback(form.id, requestAnswers)
       window.dispatchEvent(new Event('user-profile-updated'))
+      notify('Evaluación enviada. ¡Ganaste 50 puntos!')
       navigate('/catalog')
     } catch (requestError) {
       setError(requestError.message)
@@ -77,7 +126,7 @@ export default function FormViewPage() {
         <span className="eyebrow">FEEDBACK DEL PLAYTEST</span>
         <h1>{form.title}</h1>
         <p>{form.description}</p>
-        <form onSubmit={handleSubmit}>
+        <form noValidate onSubmit={handleSubmit}>
           {form.questions.map((question) => (
             <fieldset className="question-card" key={question.id}>
               <legend>{question.questionText}{question.required ? ' *' : ''}</legend>
@@ -85,16 +134,40 @@ export default function FormViewPage() {
                 <textarea rows="4" value={answers[question.id] || ''} required={question.required} onChange={(event) => updateAnswer(question, event.target.value)} />
               )}
               {question.questionType === 'NUMERIC' && (
-                <input type="number" value={answers[question.id] || ''} required={question.required} onChange={(event) => updateAnswer(question, event.target.value)} />
+                <input type="number" min="-99999999.99" max="99999999.99" step="0.01" value={answers[question.id] || ''} required={question.required} onChange={(event) => updateAnswer(question, event.target.value)} />
               )}
               {question.questionType === 'LIKERT_1_5' && (
-                <div className="rating-options">
+                <div
+                  className="rating-stars"
+                  role="radiogroup"
+                  aria-label={question.questionText}
+                  onMouseLeave={() => setHoveredRatings((current) => ({ ...current, [question.id]: null }))}
+                >
+                  <div className="rating-stars-options">
                   {[1, 2, 3, 4, 5].map((value) => (
-                    <label key={value} className="rating-option">
-                      <input type="radio" name={`question-${question.id}`} value={value} required={question.required} checked={String(answers[question.id]) === String(value)} onChange={(event) => updateAnswer(question, event.target.value)} />
-                      {value}
+                    <label key={value} className="rating-star-option" onMouseEnter={() => setHoveredRatings((current) => ({ ...current, [question.id]: value }))}>
+                      <input
+                        className="rating-star-input"
+                        type="radio"
+                        name={`question-${question.id}`}
+                        value={value}
+                        required={question.required}
+                        checked={String(answers[question.id]) === String(value)}
+                        aria-label={`${value}: ${ratingLabels[value]}`}
+                        onChange={(event) => updateAnswer(question, event.target.value)}
+                      />
+                      <svg className={value <= (hoveredRatings[question.id] || Number(answers[question.id]) || 0) ? 'rating-star-active' : ''} viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m12 2.8 2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.36l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93L12 2.8Z" />
+                      </svg>
+                      <span className="visually-hidden">{value}</span>
                     </label>
                   ))}
+                  </div>
+                  <span className="rating-description">
+                    {ratingLabels[hoveredRatings[question.id] || Number(answers[question.id])]
+                      ? `${hoveredRatings[question.id] || answers[question.id]}: ${ratingLabels[hoveredRatings[question.id] || Number(answers[question.id])]}`
+                      : 'Selecciona una calificación'}
+                  </span>
                 </div>
               )}
             </fieldset>

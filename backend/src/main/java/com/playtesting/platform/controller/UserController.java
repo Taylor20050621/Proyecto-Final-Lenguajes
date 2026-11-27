@@ -2,6 +2,7 @@ package com.playtesting.platform.controller;
 
 import com.playtesting.platform.dto.UserProfileDto;
 import com.playtesting.platform.dto.UserNotificationDto;
+import com.playtesting.platform.dto.LeaderboardEntryDto;
 import java.util.List;
 import com.playtesting.platform.service.UserService;
 import org.springframework.security.core.Authentication;
@@ -27,5 +28,10 @@ public class UserController {
     @GetMapping("/me/notifications")
     public List<UserNotificationDto> notifications(Authentication authentication) {
         return userService.getNotifications(authentication.getName());
+    }
+
+    @GetMapping("/leaderboard")
+    public List<LeaderboardEntryDto> leaderboard() {
+        return userService.getLeaderboard();
     }
 }

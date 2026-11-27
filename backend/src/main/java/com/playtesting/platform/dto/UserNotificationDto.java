@@ -8,5 +8,15 @@ public record UserNotificationDto(
         String gameTitle,
         String version,
         GameStatus status,
-        OffsetDateTime updatedAt) {
+        OffsetDateTime updatedAt,
+        String releaseNotes) {
+
+    public UserNotificationDto(
+            Long gameId,
+            String gameTitle,
+            String version,
+            GameStatus status,
+            OffsetDateTime updatedAt) {
+        this(gameId, gameTitle, version, status, updatedAt, null);
+    }
 }

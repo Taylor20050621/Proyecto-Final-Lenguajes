@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { getCurrentUser, isAuthenticated } from '../services/AuthService'
 import '../styles/LandingPage.css'
 
@@ -27,8 +28,30 @@ function StudioIcon({ type }) {
 export default function LandingPage() {
   const authenticated = isAuthenticated()
   const user = getCurrentUser()
+  const navigate = useNavigate()
+  const [showExplorePrompt, setShowExplorePrompt] = useState(false)
+
+  function handleExploreGames() {
+    if (isAuthenticated()) {
+      navigate('/catalog')
+      return
+    }
+    setShowExplorePrompt(true)
+  }
+
+  useEffect(() => {
+    if (!showExplorePrompt) return undefined
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setShowExplorePrompt(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showExplorePrompt])
 
   return (
+    <>
     <main className="landing-page">
       <section className="landing-hero">
         <div className="landing-hero-copy">
@@ -71,7 +94,7 @@ export default function LandingPage() {
         <div><strong>4.9/5</strong><span>Satisfacción de Creadores</span></div>
       </section>
 
-      <section className="landing-flow">
+      <section className="landing-flow" id="como-funciona">
         <div className="landing-section-heading"><span className="eyebrow">WORKFLOW</span><h2>De la idea al insight en cuatro pasos.</h2></div>
         <div className="flow-grid">
           {[
@@ -86,9 +109,70 @@ export default function LandingPage() {
       </section>
 
       <section className="landing-showcase">
-        <article className="showcase-card creator-showcase"><div className="showcase-icon"><StudioIcon type="dashboard" /></div><span className="eyebrow">PARA CREADORES</span><h2>Decide con datos, no con suposiciones.</h2><p>Visualiza métricas de tus jugadores, compara versiones y encuentra el próximo gran ajuste de tu juego.</p><div className="mini-bars"><span style={{ width: '88%' }} /><span style={{ width: '64%' }} /><span style={{ width: '76%' }} /></div></article>
-        <article className="showcase-card tester-showcase"><div className="showcase-icon"><StudioIcon type="feedback" /></div><span className="eyebrow">PARA TESTERS</span><h2>Tu feedback desbloquea mundos.</h2><p>Prueba experiencias únicas, gana puntos y deja una huella real en los juegos que están por llegar.</p><div className="showcase-rating"><strong>★★★★★</strong><span>+50 pts por evaluación</span></div></article>
+        <article className="showcase-card creator-showcase" id="creadores"><div className="showcase-icon"><StudioIcon type="dashboard" /></div><span className="eyebrow">PARA CREADORES</span><h2>Decide con datos, no con suposiciones.</h2><p>Visualiza métricas de tus jugadores, compara versiones y encuentra el próximo gran ajuste de tu juego.</p><div className="mini-bars"><span style={{ width: '88%' }} /><span style={{ width: '64%' }} /><span style={{ width: '76%' }} /></div></article>
+        <article className="showcase-card tester-showcase" id="testers"><div className="showcase-icon"><StudioIcon type="feedback" /></div><span className="eyebrow">PARA TESTERS</span><h2>Tu feedback desbloquea mundos.</h2><p>Prueba experiencias únicas, gana puntos y deja una huella real en los juegos que están por llegar.</p><div className="showcase-rating"><strong>★★★★★</strong><span>+50 pts por evaluación</span></div></article>
+      </section>
+      <section className="landing-about" id="acerca-de">
+        <span className="eyebrow">ACERCA DE PLAYTESTING</span>
+        <h2>Innovación indie, protegida por diseño.</h2>
+        <p>Nuestra misión es ayudar a los estudios independientes a proteger su propiedad intelectual mientras reciben métricas reales y feedback accionable antes del lanzamiento. Cada playtest está pensado para que los creadores validen sus ideas con confianza y mantengan el control de sus prototipos.</p>
       </section>
     </main>
+    <footer className="landing-footer" id="privacidad">
+      <div className="footer-grid">
+        <div className="footer-brand">
+          <Link className="brand" to="/">Playtesting<span>.</span></Link>
+          <p>Playtesting seguro para los juegos independientes del futuro.</p>
+        </div>
+        <nav className="footer-links" aria-label="Enlaces del sitio">
+          <strong>Explorar</strong>
+          <button type="button" className="footer-link-button" onClick={handleExploreGames}>Explorar juegos</button>
+          <a href="/#como-funciona">Cómo funciona</a>
+          <a href="/#acerca-de">Acerca de</a>
+        </nav>
+        <div className="footer-privacy">
+          <strong>Privacidad y confidencialidad</strong>
+          <p>Los ejecutables, builds y prototipos compartidos por los creadores son de uso exclusivo para evaluación durante el playtest y están protegidos contra distribución no autorizada. No deben copiarse, redistribuirse ni publicarse sin permiso; protegemos la propiedad intelectual de cada estudio indie.</p>
+        </div>
+      </div>
+      <div className="footer-bottom">© 2026 Playtesting Indie Studio. Todos los derechos reservados.</div>
+    </footer>
+    {showExplorePrompt && (
+      <div
+        className="landing-access-backdrop"
+        role="presentation"
+        onMouseDown={(event) => event.target === event.currentTarget && setShowExplorePrompt(false)}
+      >
+        <section
+          className="landing-access-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="landing-access-title"
+          aria-describedby="landing-access-message"
+        >
+          <button
+            type="button"
+            className="landing-access-close"
+            aria-label="Cerrar"
+            onClick={() => setShowExplorePrompt(false)}
+          >
+            ×
+          </button>
+          <span className="eyebrow">PLAYTESTING COMMUNITY</span>
+          <h2 id="landing-access-title">Únete a la comunidad para explorar</h2>
+          <p id="landing-access-message">
+            Para explorar los prototipos disponibles y participar en sesiones de playtesting, primero debes iniciar sesión o crear una cuenta.
+          </p>
+          <div className="landing-access-actions">
+            <Link className="button primary" to="/login">Iniciar Sesión</Link>
+            <Link className="button secondary" to="/register">Registrarse</Link>
+          </div>
+          <button type="button" className="landing-access-dismiss" onClick={() => setShowExplorePrompt(false)}>
+            Cerrar
+          </button>
+        </section>
+      </div>
+    )}
+    </>
   )
 }

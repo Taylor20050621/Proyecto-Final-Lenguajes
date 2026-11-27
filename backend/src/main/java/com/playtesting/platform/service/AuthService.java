@@ -39,10 +39,10 @@ public class AuthService implements UserDetailsService {
         String email = request.email().trim().toLowerCase(Locale.ROOT);
 
         if (userRepository.existsByUsernameIgnoreCase(username)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already registered");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ese nombre de usuario ya está registrado.");
         }
         if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ese correo electrónico ya está registrado.");
         }
 
         User user = new User();
@@ -58,10 +58,11 @@ public class AuthService implements UserDetailsService {
         User user = userRepository.findByUsernameIgnoreCase(request.identifier().trim())
                 .or(() -> userRepository.findByEmailIgnoreCase(request.identifier().trim()))
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+                        HttpStatus.UNAUTHORIZED, "Tu sesión ha expirado o las credenciales son incorrectas."));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Tu sesión ha expirado o las credenciales son incorrectas.");
         }
         return createResponse(user);
     }
@@ -70,7 +71,7 @@ public class AuthService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("No se encontró el usuario."));
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPasswordHash(),

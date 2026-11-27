@@ -36,6 +36,9 @@ public class Response {
     @Column(name = "submitted_at", nullable = false)
     private OffsetDateTime submittedAt;
 
+    @Column(name = "evaluated_version", length = 20)
+    private String evaluatedVersion;
+
     @OneToMany(mappedBy = "response", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Answer> answers = new ArrayList<>();
 
@@ -64,6 +67,14 @@ public class Response {
 
     public OffsetDateTime getSubmittedAt() {
         return submittedAt;
+    }
+
+    public String getEvaluatedVersion() {
+        return evaluatedVersion;
+    }
+
+    public void setEvaluatedVersion(String evaluatedVersion) {
+        this.evaluatedVersion = evaluatedVersion;
     }
 
     public Form getForm() {

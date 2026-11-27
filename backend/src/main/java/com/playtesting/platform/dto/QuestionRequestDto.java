@@ -5,7 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record QuestionRequestDto(
-        @NotBlank String questionText,
-        @NotNull QuestionType questionType,
+        @NotBlank(message = "El texto de la pregunta es obligatorio.")
+        String questionText,
+        @NotNull(message = "Selecciona un tipo de pregunta válido.")
+        QuestionType questionType,
         boolean required) {
 }

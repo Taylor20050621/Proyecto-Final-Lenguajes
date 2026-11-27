@@ -1,6 +1,11 @@
 package com.playtesting.platform.config;
 
 import com.playtesting.platform.security.JwtAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,11 +28,23 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            ObjectMapper objectMapper) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, exception) -> writeError(
+                                response,
+                                objectMapper,
+                                HttpServletResponse.SC_UNAUTHORIZED,
+                                "Tu sesión ha expirado o las credenciales son incorrectas."))
+                        .accessDeniedHandler((request, response, exception) -> writeError(
+                                response,
+                                objectMapper,
+                                HttpServletResponse.SC_FORBIDDEN,
+                                "No tienes permisos para realizar esta acción.")))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
@@ -40,6 +57,17 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    private void writeError(
+            HttpServletResponse response,
+            ObjectMapper objectMapper,
+            int status,
+            String message) throws IOException {
+        response.setStatus(status);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType("application/json");
+        objectMapper.writeValue(response.getWriter(), Map.of("message", message));
     }
 
     @Bean

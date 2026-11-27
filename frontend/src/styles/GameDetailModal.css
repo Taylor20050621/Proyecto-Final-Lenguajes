@@ -1,0 +1,20 @@
+.game-detail-modal { max-height: min(90vh, 900px); max-width: 720px; overflow-y: auto; overscroll-behavior: contain; padding: 0; }
+.game-cover-detail { flex: 0 0 240px; height: 240px; }
+.game-detail-content { padding: 26px 30px 30px; }
+.game-detail-content h2 { font-size: clamp(1.6rem, 5vw, 2.2rem); margin: 10px 0; }
+.game-detail-description { color: var(--muted); margin: 0 0 22px; white-space: pre-wrap; }
+.game-detail-list { border-bottom: 1px solid var(--border); border-top: 1px solid var(--border); display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 18px 0; }
+.game-detail-list dt { color: var(--muted); font-size: .72rem; font-weight: 700; text-transform: uppercase; }
+.game-detail-list dd { color: var(--text); margin: 5px 0 0; overflow-wrap: anywhere; }
+.game-file-metadata dd { color: rgba(237, 230, 216, .72); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.release-notes { margin-top: 20px; }
+.release-notes h3 { color: var(--text); font-size: .95rem; margin: 0 0 6px; }
+.release-notes p { font-size: .86rem; margin: 0; }
+.game-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+@media (max-width: 600px) {
+  .game-detail-modal { max-height: 90vh; max-width: 95vw; overflow-y: auto; width: 95vw; }
+  .game-detail-content { padding: 22px 20px 24px; }
+  .game-detail-list { gap: 14px; grid-template-columns: 1fr; }
+  .game-detail-actions { flex-direction: column; }
+  .game-detail-actions .button { width: 100%; }
+}

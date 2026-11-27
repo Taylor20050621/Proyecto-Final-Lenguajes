@@ -51,33 +51,44 @@ public class FeedbackService {
     @Transactional
     public FeedbackResponseDto submit(SubmitFeedbackRequestDto request, String username) {
         User tester = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No se encontró el usuario."));
         if (tester.getRole() != Role.TESTER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only testers can submit feedback");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo los testers pueden enviar evaluaciones.");
         }
+        userRepository.findByIdForUpdate(tester.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No se encontró el usuario."));
 
         Form form = formService.findActiveEntity(request.formId());
         if (form.getGame().getStatus() != GameStatus.EN_PLAYTESTING) {
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "This game is not currently accepting feedback");
+                    HttpStatus.CONFLICT, "Este juego no está recibiendo evaluaciones en este momento.");
+        }
+        String evaluatedVersion = form.getGame().getVersion();
+        if (responseRepository.existsByTesterIdAndFormGameIdAndEvaluatedVersion(
+                tester.getId(), form.getGame().getId(), evaluatedVersion)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ya evaluaste la versión " + evaluatedVersion
+                            + " de este prototipo. Podrás volver a evaluarlo cuando el creador publique una nueva versión.");
         }
         Set<Long> submittedQuestionIds = new HashSet<>();
         for (AnswerRequestDto answerRequest : request.answers()) {
             if (answerRequest.questionId() == null || !submittedQuestionIds.add(answerRequest.questionId())) {
-                throw invalidAnswer("Each question must be answered at most once");
+                throw invalidAnswer("Cada pregunta puede responderse una sola vez.");
             }
             Question question = findQuestion(form, answerRequest.questionId());
             validateAnswer(question, answerRequest);
         }
         for (Question question : form.getQuestions()) {
             if (question.isRequired() && !submittedQuestionIds.contains(question.getId())) {
-                throw invalidAnswer("All required questions must be answered");
+                throw invalidAnswer("Debes responder todas las preguntas obligatorias.");
             }
         }
 
         Response response = new Response();
         response.setForm(form);
         response.setTester(tester);
+        response.setEvaluatedVersion(evaluatedVersion);
         for (AnswerRequestDto answerRequest : request.answers()) {
             Answer answer = new Answer();
             answer.setQuestion(findQuestion(form, answerRequest.questionId()));
@@ -140,15 +151,16 @@ public class FeedbackService {
         return new FeedbackSummaryDto(
                 responses.size(),
                 average(likertTotal, likertCount),
+                likertCount,
                 average(numericTotal, numericCount),
                 questionSummaries);
     }
 
     private void verifyGameOwner(Long gameId, String username) {
         var game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró el juego solicitado."));
         if (!game.getCreator().getUsername().equalsIgnoreCase(username)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the game creator can view feedback");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el creador del juego puede consultar estas evaluaciones.");
         }
     }
 
@@ -183,17 +195,17 @@ public class FeedbackService {
         return form.getQuestions().stream()
                 .filter(question -> question.getId().equals(questionId))
                 .findFirst()
-                .orElseThrow(() -> invalidAnswer("Question does not belong to the form"));
+                .orElseThrow(() -> invalidAnswer("La pregunta indicada no pertenece a este formulario."));
     }
 
     private void validateAnswer(Question question, AnswerRequestDto answer) {
         String text = answer.answerText();
         BigDecimal numeric = answer.numericValue();
         if (question.getQuestionType() == QuestionType.TEXT && (text == null || text.isBlank() || numeric != null)) {
-            throw invalidAnswer("Text questions require answerText only");
+            throw invalidAnswer("La pregunta de texto requiere únicamente una respuesta escrita.");
         }
         if (question.getQuestionType() == QuestionType.NUMERIC && (numeric == null || text != null)) {
-            throw invalidAnswer("Numeric questions require numericValue only");
+            throw invalidAnswer("La pregunta numérica requiere únicamente un valor numérico.");
         }
         if (question.getQuestionType() == QuestionType.LIKERT_1_5
                 && (numeric == null
@@ -201,7 +213,7 @@ public class FeedbackService {
                         || numeric.stripTrailingZeros().scale() > 0
                         || numeric.compareTo(BigDecimal.ONE) < 0
                         || numeric.compareTo(BigDecimal.valueOf(5)) > 0)) {
-            throw invalidAnswer("Likert answers must be whole numbers from 1 to 5");
+            throw invalidAnswer("La calificación debe ser un número entero entre 1 y 5.");
         }
     }
 
